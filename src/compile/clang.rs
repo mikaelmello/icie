@@ -27,6 +27,22 @@ const CLANG: Service = Service {
 	supports_macos: true,
 };
 
+const GPP: Service = Service {
+	human_name: "G++",
+	exec_linuxmac: Some("g++"),
+	exec_windows: None,
+	package_apt: Some("g++"),
+	// On macOS, Clang is supposed to be installed along with some part of Xcode.
+	// Also trying to run the command will display a dialog asking the user to install it.
+	// In this very specific situation, macOS seems pretty nice.
+	package_brew: None,
+	package_pacman: Some("g++"),
+	tutorial_url_windows: None,
+	supports_linux: true,
+	supports_windows: false,
+	supports_macos: true,
+};
+
 // Searching for MinGW is more complex than searching for Linux/macOS executables, so this is just
 // to display a nice error message with a tutorial link.
 const MINGW: Service = Service {
@@ -63,7 +79,7 @@ pub async fn compile(
 async fn find_compiler() -> R<Compiler> {
 	match OS::query()? {
 		OS::Linux | OS::MacOS => {
-			let executable = CLANG.find_executable().await?;
+			let executable = GPP.find_executable().await?;
 			Ok(Compiler { executable, mingw_path: None })
 		},
 		OS::Windows => find_compiler_mingw().await,
