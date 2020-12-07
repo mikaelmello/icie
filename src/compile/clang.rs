@@ -32,15 +32,12 @@ const GPP: Service = Service {
 	exec_linuxmac: Some("g++"),
 	exec_windows: None,
 	package_apt: Some("g++"),
-	// On macOS, Clang is supposed to be installed along with some part of Xcode.
-	// Also trying to run the command will display a dialog asking the user to install it.
-	// In this very specific situation, macOS seems pretty nice.
 	package_brew: None,
-	package_pacman: Some("g++"),
+	package_pacman: Some("gcc"),
 	tutorial_url_windows: None,
 	supports_linux: true,
 	supports_windows: false,
-	supports_macos: true,
+	supports_macos: false,
 };
 
 // Searching for MinGW is more complex than searching for Linux/macOS executables, so this is just
@@ -78,12 +75,20 @@ pub async fn compile(
 
 async fn find_compiler() -> R<Compiler> {
 	match OS::query()? {
-		OS::Linux | OS::MacOS => {
-			let executable = GPP.find_executable().await?;
-			Ok(Compiler { executable, mingw_path: None })
-		},
+		OS::MacOS => find_compiler_clang().await,
+		OS::Linux => find_compiler_gpp().await,
 		OS::Windows => find_compiler_mingw().await,
 	}
+}
+
+async fn find_compiler_gpp() -> R<Compiler> {
+	let executable = GPP.find_executable().await?;
+	return Ok(Compiler { executable, mingw_path: None })
+}
+
+async fn find_compiler_clang() -> R<Compiler> {
+	let executable = CLANG.find_executable().await?;
+	return Ok(Compiler { executable, mingw_path: None })
 }
 
 async fn find_compiler_mingw() -> R<Compiler> {
